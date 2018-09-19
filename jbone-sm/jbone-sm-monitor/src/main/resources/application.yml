@@ -1,0 +1,136 @@
+spring:
+  application:
+    name: jbone-sm-monitor
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    password: jbone
+  #rabbitmq配置
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+  #禁用sleuth，改用rabbitmq
+  sleuth:
+    enabled: false
+
+  # 调用链数据源配置
+  datasource:
+    schema:
+     - classpath:/zipkin.sql
+    url: jdbc:mysql://121.42.174.77:3306/jbone_zipkin?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&useSSL=false
+    username: jbone_zipkin
+    password: Jbone_zipkin_666
+    driver-class-name: com.mysql.jdbc.Driver
+    initialize: true
+    continue-on-error: true
+# 调用链配置mysql存储
+zipkin:
+  storage:
+    type: mysql
+
+# 服务端口
+server:
+  port: 10003
+
+turbine.stream.port: 10004
+
+# 注册中心配置
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:10001/eureka
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.cloud.client.ipAddress}:${server.port}
+
+# 禁用管理安全策略
+management:
+  security:
+    enabled: false
+
+# 配置Eureka中的serviceId列表，表明监控哪些服务
+#turbine.appConfig: jbone-sys-admin,jbone-sys-server,jbone-tag-admin,jbone-cas,jbone-cas-manager,jbone-sm-monitor
+#指定聚合哪些集群，多个使用","分割，默认为default
+#turbine.aggregator.clusterConfig: default
+#clusterNameExpression指定集群名称，默认表达式appName；此时：turbine.aggregator.clusterConfig需要配置想要监控的应用名称；2. 当clusterNameExpression: default时，turbine.aggregator.clusterConfig可以不写，因为默认就是default
+#turbine.clusterNameExpression: new String("default")
+
+
+jbone:
+  #CAS服务地址
+  cas:
+    casServerUrl: https://jbone-cas.majunwei.com:8443/cas
+    #当前系统地址
+    currentServerUrlPrefix: http://jbone-sm-monitor.majunwei.com:10003
+    #过滤器地址,CAS认证通过后会回掉到jbone.cas.currentServerUrlPrefix/jbone.cas.casFilterUrlPattern
+    casFilterUrlPattern: /cas
+    #登录成功后的跳转路径，默认"/"
+    successUrl: /zipkin/
+    #未授权的跳转路径，默认"/403"
+    unauthorizedUrl: /403
+    #权限过滤规则
+    filterChainDefinition:
+      /health: anon
+      /archaius: anon
+      /refresh: anon
+      /configprops: anon
+      /env/**: anon
+      /service-registry/**: anon
+      /auditevents: anon
+      /pause: anon
+      /dump: anon
+      /loggers/**: anon
+      /resume: anon
+      /metrics/**: anon
+      /channels: anon
+      /beans: anon
+      /mappings: anon
+      /autoconfig: anon
+      /trace: anon
+      /hystrix.stream/**: anon
+      /info: anon
+      /restart: anon
+      /heapdump: anon
+      /features: anon
+      /turbine.stream: anon
+      /zipkin/**: authc,roles[serverAdministrator]
+      /**: anon
+      /login: anon
+    clientSessionTimeout: 180000 #客户端Session失效时间，默认30分钟
+  #系统配置
+  sys:
+    serverName: jbone-sm-monitor
+    serverProtoal: http:// #feign通讯协议，默认http://
+  #系统管理Feign调用配置
+  rpc.sysServer.feign:
+    protocol: http
+    name: jbone-sys-server
+
+# info接口返回值
+info:
+  app:
+    name: ${spring.application.name}
+    version: 1.0.0
+  java:
+    version: ${java.version}
+  code:
+    git: https://github.com/417511458/jbone
+    gitee: https://gitee.com/majunwei2017/jbone
+  domain: http://www.majunwei.com
+
+# 启用超时设置
+hystrix.command.default.execution.timeout.enabled: true
+# 熔断时间为10S
+hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds: 10000
+# 使用线程隔离熔断
+hystrix.command.default.execution.isolation.strategy: THREAD
+# 核心线程数100
+hystrix.threadpool.default.coreSize: 100
+# 超时时熔断
+hystrix.command.default.execution.isolation.thread.interruptOnTimeout: true
+# 取消时是否熔断
+hystrix.command.default.execution.isolation.thread.interruptOnCancel: false

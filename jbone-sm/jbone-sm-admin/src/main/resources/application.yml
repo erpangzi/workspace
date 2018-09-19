@@ -1,0 +1,115 @@
+spring:
+  application:
+    name: jbone-sm-admin
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    password: jbone
+  cloud:
+    config:
+    enabled: false
+
+server.port: 10002
+
+spring.boot.admin.context-path: /admin
+
+#注册中心
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:10001/eureka
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.cloud.client.ipAddress}:${server.port}
+
+
+management.security.enabled: false
+
+spring.boot.admin.routes.endpoints: env,metrics,dump,jolokia,info,configprops,trace,logfile,refresh,flyway,liquibase,heapdump,loggers,auditevents,hystrix.stream
+
+# turbine监控配置
+# clusters是指监控的集群
+# location是turbine服务的ID，Jbone中使用jbone-sm-monitor作为turbine监控服务
+spring.boot.admin.turbine:
+#  clusters: default
+  location: http://jbone-sm-monitor.majunwei.com:10004/
+
+#CAS服务地址
+jbone:
+  cas:
+    casServerUrl: https://jbone-cas.majunwei.com:8443/cas
+    #当前系统地址
+    currentServerUrlPrefix: http://jbone-sm-admin.majunwei.com:10002
+    #过滤器地址,CAS认证通过后会回掉到jbone.cas.currentServerUrlPrefix/jbone.cas.casFilterUrlPattern
+    casFilterUrlPattern: /cas
+    #登录成功后的跳转路径，默认"/"
+    successUrl: /admin/
+    logoutUrl: /admin/logout
+    #未授权的跳转路径，默认"/403"
+    unauthorizedUrl: /403
+    clientSessionTimeout: 180000
+    #权限过滤规则
+    filterChainDefinition:
+      /health: anon
+      /archaius: anon
+      /refresh: anon
+      /configprops: anon
+      /env/**: anon
+      /service-registry/**: anon
+      /auditevents: anon
+      /pause: anon
+      /dump: anon
+      /loggers/**: anon
+      /resume: anon
+      /metrics/**: anon
+      /channels: anon
+      /beans: anon
+      /mappings: anon
+      /autoconfig: anon
+      /trace: anon
+      /hystrix.stream/**: anon
+      /info: anon
+      /restart: anon
+      /heapdump: anon
+      /features: anon
+      /turbine.stream: anon
+      /admin/**: authc,roles[serverAdministrator]
+#      /**: anon
+#      /login: anon
+
+  #系统服务名称
+  sys:
+    serverName: jbone-sm-admin
+    #feign通讯协议，默认http://
+    serverProtoal: http://
+  #系统管理Feign调用配置
+  rpc.sysServer.feign:
+    protocol: http
+    name: jbone-sys-server
+
+# info接口返回值
+info:
+  app:
+    name: ${spring.application.name}
+    version: 1.0.0
+  java:
+    version: ${java.version}
+  code:
+    git: https://github.com/417511458/jbone
+    gitee: https://gitee.com/majunwei2017/jbone
+  domain: http://www.majunwei.com
+
+# 启用超时设置
+hystrix.command.default.execution.timeout.enabled: true
+# 熔断时间为10S
+hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds: 10000
+# 使用线程隔离熔断
+hystrix.command.default.execution.isolation.strategy: THREAD
+# 核心线程数100
+hystrix.threadpool.default.coreSize: 100
+# 超时时熔断
+hystrix.command.default.execution.isolation.thread.interruptOnTimeout: true
+# 取消时是否熔断
+hystrix.command.default.execution.isolation.thread.interruptOnCancel: false
